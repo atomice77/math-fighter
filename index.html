@@ -20,18 +20,6 @@
     .font-arcade {
       font-family: 'Press Start 2P', cursive;
     }
-    .pixel-border {
-      box-shadow: 
-        0 -4px 0 0 #000,
-        0 4px 0 0 #000,
-        -4px 0 0 0 #000,
-        4px 0 0 0 #000;
-    }
-    .pixel-box-yellow {
-      background: #f59e0b;
-      border: 4px solid #b45309;
-      box-shadow: inset -4px -4px 0px #78350f, inset 4px 4px 0px #fde047;
-    }
     .pixel-btn {
       transition: transform 0.05s, background-color 0.1s;
       box-shadow: inset -3px -3px 0px rgba(0,0,0,0.4), inset 3px 3px 0px rgba(255,255,255,0.4);
@@ -40,7 +28,6 @@
       transform: translate(2px, 2px);
       box-shadow: inset 2px 2px 0px rgba(0,0,0,0.6);
     }
-    /* Speech bubble triangle */
     .speech-bubble::after {
       content: '';
       position: absolute;
@@ -53,17 +40,8 @@
       display: block;
       width: 0;
     }
-    /* Healthbar animation */
     .hp-bar-inner {
       transition: width 0.4s ease-out;
-    }
-    /* Pulse glow */
-    @keyframes pulse-glow {
-      0%, 100% { filter: drop-shadow(0 0 5px rgba(239,68,68,0.8)); }
-      50% { filter: drop-shadow(0 0 15px rgba(239,68,68,1)); }
-    }
-    .glow-red {
-      animation: pulse-glow 1.5s infinite;
     }
   </style>
 </head>
@@ -72,7 +50,7 @@
   <!-- Main Game Container -->
   <div id="game-container" class="relative w-full max-w-4xl bg-slate-900 border-4 border-yellow-500 rounded-lg shadow-2xl overflow-hidden flex flex-col my-auto">
     
-    <!-- Top HUD: Stage, Round & Health Bars -->
+    <!-- Top HUD -->
     <div class="bg-black/90 p-3 border-b-4 border-slate-800 relative">
       <div class="flex justify-between items-center text-xs sm:text-sm font-arcade text-yellow-400 mb-1">
         <span id="player-name-hud">1P: 태랑 (태권도)</span>
@@ -80,21 +58,17 @@
         <span id="enemy-name-hud">2P: 일본 (가라테)</span>
       </div>
 
-      <!-- Health Bars & KO Timer -->
       <div class="flex items-center gap-2">
-        <!-- Player HP Bar -->
         <div class="flex-1 bg-gray-800 h-6 sm:h-8 rounded p-1 border-2 border-gray-600 relative overflow-hidden flex justify-end">
           <div id="player-hp-bar" class="hp-bar-inner bg-gradient-to-r from-green-500 to-emerald-400 h-full w-full rounded-sm"></div>
           <span id="player-hp-text" class="absolute inset-0 flex items-center justify-start pl-2 text-xs font-bold font-arcade text-white drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">100 / 100</span>
         </div>
 
-        <!-- KO Symbol -->
         <div class="flex flex-col items-center justify-center w-10 sm:w-12 h-10 sm:h-12 bg-red-700 border-2 border-yellow-400 rounded text-yellow-300 font-arcade font-extrabold text-xs sm:text-sm shadow-md">
           <span>K.O</span>
           <span id="match-timer" class="text-xs text-white">99</span>
         </div>
 
-        <!-- Enemy HP Bar -->
         <div class="flex-1 bg-gray-800 h-6 sm:h-8 rounded p-1 border-2 border-gray-600 relative overflow-hidden">
           <div id="enemy-hp-bar" class="hp-bar-inner bg-gradient-to-r from-red-500 to-amber-500 h-full w-full rounded-sm float-right"></div>
           <span id="enemy-hp-text" class="absolute inset-0 flex items-center justify-end pr-2 text-xs font-bold font-arcade text-white drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">100 / 100</span>
@@ -102,17 +76,16 @@
       </div>
     </div>
 
-    <!-- Instruction Banner (Attacking or Defending Instruction) -->
+    <!-- Instruction Banner -->
     <div id="turn-banner" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-slate-950 font-black text-center py-2 text-base sm:text-xl shadow-inner border-y-2 border-yellow-300 tracking-wider">
       원하는 부위를 사용해 공격을 하세요.
     </div>
 
-    <!-- Game Canvas / Arena Area -->
+    <!-- Game Canvas Arena -->
     <div class="relative w-full h-[260px] sm:h-[340px] bg-slate-950 overflow-hidden">
-      <!-- Fighting Canvas -->
       <canvas id="fighterCanvas" class="w-full h-full block"></canvas>
 
-      <!-- Quiz Bubble Popup Overlay -->
+      <!-- Quiz Bubble Popup -->
       <div id="quiz-bubble-overlay" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
         <div class="speech-bubble relative bg-white border-4 border-slate-900 rounded-2xl px-6 py-3 shadow-2xl text-center transform scale-105 transition-all">
           <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-0.5" id="quiz-type-title">신속히 구구단을 푸세요!</div>
@@ -120,22 +93,21 @@
             <span id="quiz-question">9 × 8 =</span>
             <span id="quiz-user-input" class="text-blue-600 underline underline-offset-4 min-w-[2ch]">?</span>
           </div>
-          <!-- Speed Timer Gauge -->
           <div class="w-full bg-gray-200 h-2 rounded-full mt-2 overflow-hidden border border-gray-400">
             <div id="quiz-timer-bar" class="bg-blue-600 h-full w-full transition-all duration-75"></div>
           </div>
         </div>
       </div>
 
-      <!-- Target Selection Buttons Overlay (When selecting Body Part) -->
+      <!-- Target Selection Buttons -->
       <div id="body-part-selector" class="absolute inset-x-0 bottom-4 z-10 flex justify-center gap-2 sm:gap-4 px-2">
         <button onclick="handleTargetSelect('HEAD')" class="pixel-btn bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-3 sm:px-5 rounded-lg border-2 border-red-300 text-xs sm:text-sm flex flex-col items-center shadow-lg">
           <span>🎯 머리/얼굴</span>
-          <span class="text-[10px] text-red-200 font-normal" id="head-target-info">(약점)</span>
+          <span class="text-[10px] text-red-200 font-normal" id="head-target-info">(일반)</span>
         </button>
         <button onclick="handleTargetSelect('BODY')" class="pixel-btn bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-3 sm:px-5 rounded-lg border-2 border-amber-300 text-xs sm:text-sm flex flex-col items-center shadow-lg">
           <span>🛡️ 몸통/상체</span>
-          <span class="text-[10px] text-amber-200 font-normal" id="body-target-info">(일반)</span>
+          <span class="text-[10px] text-amber-200 font-normal" id="body-target-info">(약점 ★)</span>
         </button>
         <button onclick="handleTargetSelect('LEG')" class="pixel-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 sm:px-5 rounded-lg border-2 border-emerald-300 text-xs sm:text-sm flex flex-col items-center shadow-lg">
           <span>🦵 다리/하체</span>
@@ -144,7 +116,7 @@
       </div>
     </div>
 
-    <!-- Interactive Numeric Keypad Area -->
+    <!-- Keypad Section -->
     <div id="keypad-section" class="bg-slate-950 p-3 border-t-2 border-slate-800 flex flex-col items-center">
       <div class="w-full max-w-md grid grid-cols-3 gap-1.5 sm:gap-2">
         <button onclick="pressKey('7')" class="pixel-btn bg-slate-800 hover:bg-slate-700 text-white font-arcade text-lg sm:text-xl py-2 sm:py-3 rounded border border-slate-600">7</button>
@@ -165,14 +137,13 @@
       </div>
     </div>
 
-    <!-- Battle Math Log Terminal Panel -->
+    <!-- Battle Math Log Terminal -->
     <div class="bg-black text-emerald-400 font-mono text-xs p-2 border-t border-slate-800 h-20 overflow-y-auto leading-relaxed" id="combat-log">
-      <div>[시스템]: '수리격투왕: 월드 투어'에 오신 것을 환영합니다! 공격 부위를 선택하세요.</div>
+      <div>[시스템]: '구구단 격투왕'에 오신 것을 환영합니다! 공격 부위를 선택하세요.</div>
     </div>
-
   </div>
 
-  <!-- Modal Screen for Game Start / Stage Clear / Game Over -->
+  <!-- Modal Screen -->
   <div id="modal-screen" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border-4 border-yellow-500 rounded-xl p-6 max-w-md w-full text-center shadow-2xl flex flex-col items-center">
       <h1 id="modal-title" class="text-2xl sm:text-3xl font-extrabold text-yellow-400 font-arcade mb-2 tracking-wide drop-shadow-md">
@@ -182,7 +153,6 @@
         태권도로 세계 제패! 빠른 연산으로 승리하세요.
       </p>
 
-      <!-- Player Character Selection (only on start) -->
       <div id="char-select-box" class="w-full mb-6">
         <p class="text-xs text-yellow-300 mb-2 font-bold">주인공 캐릭터 선택:</p>
         <div class="grid grid-cols-2 gap-3">
@@ -201,194 +171,153 @@
         </div>
       </div>
 
-      <!-- Stage & Rules Summary -->
       <div id="modal-info-box" class="bg-slate-950 border border-slate-700 rounded p-3 w-full text-left text-xs text-slate-300 mb-5 space-y-1">
         <p>⚡ <strong class="text-yellow-400">약점 타격:</strong> 방어력 50% 무시 + 추가 데미지 +4</p>
         <p>⏱️ <strong class="text-blue-400">1.0초 미만 정답:</strong> 크리티컬 1.5배 데미지!</p>
         <p>📈 <strong class="text-red-400">라운드 스케일링:</strong> 라운드가 늘어날수록 적 방어력 상승</p>
       </div>
 
-    <!-- Battle Math Log Terminal Panel -->
-    <div class="bg-black text-emerald-400 font-mono text-xs p-2 border-t border-slate-800 h-20 overflow-y-auto leading-relaxed" id="combat-log">
-      <div>[시스템]: '구구단 격투왕'에 오신 것을 환영합니다! 공격 부위를 선택하세요.</div>
+      <button id="modal-btn" onclick="handleModalAction()" class="pixel-btn w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-extrabold text-base sm:text-lg py-3 rounded-lg border-2 border-yellow-300 shadow-xl">
+        세계 투어 시작!
+      </button>
     </div>
-
   </div>
 
-  <!-- Game Logic JavaScript -->
   <script>
-    /* --- Audio Synthesizer (Web Audio API) --- */
     class SoundFX {
-      constructor() {
-        this.ctx = null;
-      }
+      constructor() { this.ctx = null; }
       init() {
         if (!this.ctx) {
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         }
       }
       playPunch() {
-        this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(1, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.15);
-      }
-      playCorrect() {
-        this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.2); // G5
-        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.35);
-      }
-      playWrong() {
-        this.init();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(130, this.ctx.currentTime);
-        osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + 0.3);
-      }
-      playVictory() {
-        this.init();
-        const notes = [440, 554, 659, 880];
-        notes.forEach((freq, i) => {
+        try {
+          this.init();
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.12);
-          gain.gain.setValueAtTime(0.3, this.ctx.currentTime + i * 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.12 + 0.25);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(1, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
-          osc.start(this.ctx.currentTime + i * 0.12);
-          osc.stop(this.ctx.currentTime + i * 0.12 + 0.25);
-        });
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.15);
+        } catch(e) {}
+      }
+      playCorrect() {
+        try {
+          this.init();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
+          osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.1);
+          osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.35);
+        } catch(e) {}
+      }
+      playWrong() {
+        try {
+          this.init();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(130, this.ctx.currentTime);
+          osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.3);
+        } catch(e) {}
+      }
+      playVictory() {
+        try {
+          this.init();
+          const notes = [440, 554, 659, 880];
+          notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.12);
+            gain.gain.setValueAtTime(0.3, this.ctx.currentTime + i * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.12 + 0.25);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + i * 0.12);
+            osc.stop(this.ctx.currentTime + i * 0.12 + 0.25);
+          });
+        } catch(e) {}
       }
     }
     const sfx = new SoundFX();
 
-    /* --- Game Configuration & Database --- */
     const STAGE_DATABASE = [
-      {
-        stage: 1,
-        country: "일본",
-        martial: "가라테",
-        weakness: "BODY",
-        strong: "NONE",
-        roundDefenses: [0, 10, 20], // Def % for Round 1, 2, 3
-        color: "#ef4444",
-        avatar: "🥋"
-      },
-      {
-        stage: 2,
-        country: "태국",
-        martial: "무에타이",
-        weakness: "HEAD",
-        strong: "LEG",
-        roundDefenses: [5, 15, 25],
-        color: "#f59e0b",
-        avatar: "🥊"
-      },
-      {
-        stage: 3,
-        country: "미국",
-        martial: "복싱",
-        weakness: "LEG",
-        strong: "HEAD",
-        roundDefenses: [10, 20, 35],
-        color: "#3b82f6",
-        avatar: "👊"
-      },
-      {
-        stage: 4,
-        country: "캐나다",
-        martial: "불곰",
-        weakness: "HEAD",
-        strong: "BODY",
-        roundDefenses: [15, 30, 45],
-        color: "#8b5cf6",
-        avatar: "🐻"
-      }
+      { stage: 1, country: "일본", martial: "가라테", weakness: "BODY", strong: "NONE", roundDefenses: [0, 10, 20], color: "#ef4444", avatar: "🥋" },
+      { stage: 2, country: "태국", martial: "무에타이", weakness: "HEAD", strong: "LEG", roundDefenses: [5, 15, 25], color: "#f59e0b", avatar: "🥊" },
+      { stage: 3, country: "미국", martial: "복싱", weakness: "LEG", strong: "HEAD", roundDefenses: [10, 20, 35], color: "#3b82f6", avatar: "👊" },
+      { stage: 4, country: "캐나다", martial: "불곰", weakness: "HEAD", strong: "BODY", roundDefenses: [15, 30, 45], color: "#8b5cf6", avatar: "🐻" }
     ];
 
-    /* --- Global Game State --- */
     let gameState = {
-      heroType: 'TAERANG', // TAERANG or HANA
+      heroType: 'TAERANG',
       currentStageIdx: 0,
       currentRound: 1,
       playerHp: 100,
       enemyHp: 100,
       maxHp: 100,
-      phase: 'ATTACK', // 'ATTACK' or 'DEFENSE'
-      activeTarget: null, // 'HEAD', 'BODY', 'LEG'
+      phase: 'ATTACK',
+      activeTarget: null,
       currentQuiz: null,
       userInput: '',
       quizStartTime: 0,
       quizTimerInterval: null,
       isAnimPlaying: false,
-      modalState: 'START' // 'START', 'STAGE_CLEAR', 'GAME_OVER', 'VICTORY'
+      modalState: 'START'
     };
 
-    /* --- Canvas Animation Variables --- */
     let canvas, ctx;
-    let playerAnimState = 'IDLE'; // 'IDLE', 'PUNCH', 'KICK', 'HIT', 'BLOCK'
+    let playerAnimState = 'IDLE';
     let enemyAnimState = 'IDLE';
     let animFrame = 0;
     let hitParticles = [];
 
-    /* --- DOM Elements --- */
-    const playerHpBar = document.getElementById('player-hp-bar');
-    const enemyHpBar = document.getElementById('enemy-hp-bar');
-    const playerHpText = document.getElementById('player-hp-text');
-    const enemyHpText = document.getElementById('enemy-hp-text');
-    const playerNameHud = document.getElementById('player-name-hud');
-    const enemyNameHud = document.getElementById('enemy-name-hud');
-    const stageRoundHud = document.getElementById('stage-round-hud');
-    const turnBanner = document.getElementById('turn-banner');
-    const bodyPartSelector = document.getElementById('body-part-selector');
-    const quizBubbleOverlay = document.getElementById('quiz-bubble-overlay');
-    const quizQuestionEl = document.getElementById('quiz-question');
-    const quizUserInputEl = document.getElementById('quiz-user-input');
-    const quizTimerBar = document.getElementById('quiz-timer-bar');
-    const quizTypeTitle = document.getElementById('quiz-type-title');
-    const combatLog = document.getElementById('combat-log');
-    const modalScreen = document.getElementById('modal-screen');
+    let playerHpBar, enemyHpBar, playerHpText, enemyHpText, playerNameHud, enemyNameHud, stageRoundHud, turnBanner, bodyPartSelector, quizBubbleOverlay, quizQuestionEl, quizUserInputEl, quizTimerBar, quizTypeTitle, combatLog, modalScreen;
 
-    /* --- Initialization --- */
     window.onload = () => {
       canvas = document.getElementById('fighterCanvas');
       ctx = canvas.getContext('2d');
+
+      playerHpBar = document.getElementById('player-hp-bar');
+      enemyHpBar = document.getElementById('enemy-hp-bar');
+      playerHpText = document.getElementById('player-hp-text');
+      enemyHpText = document.getElementById('enemy-hp-text');
+      playerNameHud = document.getElementById('player-name-hud');
+      enemyNameHud = document.getElementById('enemy-name-hud');
+      stageRoundHud = document.getElementById('stage-round-hud');
+      turnBanner = document.getElementById('turn-banner');
+      bodyPartSelector = document.getElementById('body-part-selector');
+      quizBubbleOverlay = document.getElementById('quiz-bubble-overlay');
+      quizQuestionEl = document.getElementById('quiz-question');
+      quizUserInputEl = document.getElementById('quiz-user-input');
+      quizTimerBar = document.getElementById('quiz-timer-bar');
+      quizTypeTitle = document.getElementById('quiz-type-title');
+      combatLog = document.getElementById('combat-log');
+      modalScreen = document.getElementById('modal-screen');
+
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
-      
-      // Keyboard input support
       window.addEventListener('keydown', handlePhysicalKeyboard);
-
-      // Canvas Drag/Click interaction for quick targeting
       canvas.addEventListener('click', handleCanvasClick);
 
-      // Start Canvas Render Loop
       requestAnimationFrame(renderCanvasLoop);
     };
 
@@ -397,8 +326,6 @@
       canvas.width = canvas.parentElement.clientWidth;
       canvas.height = canvas.parentElement.clientHeight;
     }
-
-    /* --- Core Game Loop & State Controls --- */
 
     function startNewGame() {
       const selectedHero = document.querySelector('input[name="hero"]:checked').value;
@@ -443,7 +370,6 @@
       enemyNameHud.innerText = `2P: ${stageData.country} (${stageData.martial})`;
       stageRoundHud.innerText = `STAGE ${stageData.stage} - ROUND ${gameState.currentRound}`;
 
-      // HP Bar Updates
       const pPercent = Math.max(0, (gameState.playerHp / gameState.maxHp) * 100);
       const ePercent = Math.max(0, (gameState.enemyHp / gameState.maxHp) * 100);
       
@@ -464,32 +390,20 @@
       headInfo.innerText = stageData.weakness === 'HEAD' ? '(약점 ★)' : (stageData.strong === 'HEAD' ? '(강점 🛡️)' : '(일반)');
       bodyInfo.innerText = stageData.weakness === 'BODY' ? '(약점 ★)' : (stageData.strong === 'BODY' ? '(강점 🛡️)' : '(일반)');
       legInfo.innerText = stageData.weakness === 'LEG' ? '(약점 ★)' : (stageData.strong === 'LEG' ? '(강점 🛡️)' : '(일반)');
-
-      headInfo.className = stageData.weakness === 'HEAD' ? 'text-yellow-300 font-bold' : 'text-red-200 font-normal';
-      bodyInfo.className = stageData.weakness === 'BODY' ? 'text-yellow-300 font-bold' : 'text-amber-200 font-normal';
-      legInfo.className = stageData.weakness === 'LEG' ? 'text-yellow-300 font-bold' : 'text-emerald-200 font-normal';
     }
-
-    /* --- Target & Quiz Trigger --- */
 
     function handleTargetSelect(bodyPart) {
       if (gameState.isAnimPlaying) return;
       gameState.activeTarget = bodyPart;
-      
-      // Hide target selector & Show Quiz Popup
       bodyPartSelector.classList.add('hidden');
       generateQuiz();
     }
 
     function generateQuiz() {
-      const num1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
-      const num2 = Math.floor(Math.random() * 8) + 2; // 2 to 9
+      const num1 = Math.floor(Math.random() * 8) + 2;
+      const num2 = Math.floor(Math.random() * 8) + 2;
       
-      gameState.currentQuiz = {
-        n1: num1,
-        n2: num2,
-        answer: num1 * num2
-      };
+      gameState.currentQuiz = { n1: num1, n2: num2, answer: num1 * num2 };
       gameState.userInput = '';
       gameState.quizStartTime = performance.now();
 
@@ -499,11 +413,9 @@
       
       quizBubbleOverlay.classList.remove('hidden');
 
-      // Start Quiz Timer Gauge Animation (3 seconds)
       if (gameState.quizTimerInterval) clearInterval(gameState.quizTimerInterval);
-      
       quizTimerBar.style.width = '100%';
-      const timerDuration = 3000; // 3 seconds timeout
+      const timerDuration = 3000;
       
       gameState.quizTimerInterval = setInterval(() => {
         const elapsed = performance.now() - gameState.quizStartTime;
@@ -512,12 +424,10 @@
 
         if (elapsed >= timerDuration) {
           clearInterval(gameState.quizTimerInterval);
-          submitQuizAnswer(true); // Timeout failure
+          submitQuizAnswer(true);
         }
       }, 50);
     }
-
-    /* --- Keypad & Input Handling --- */
 
     function pressKey(key) {
       if (quizBubbleOverlay.classList.contains('hidden')) return;
@@ -549,7 +459,6 @@
 
     function handleCanvasClick(e) {
       if (!bodyPartSelector.classList.contains('hidden')) {
-        // Quick select body parts by clicking canvas regions
         const rect = canvas.getBoundingClientRect();
         const clickY = e.clientY - rect.top;
         const relativeY = clickY / rect.height;
@@ -563,8 +472,6 @@
         }
       }
     }
-
-    /* --- Combat Logic & Damage Calculation --- */
 
     function submitQuizAnswer(isTimeout = false) {
       if (gameState.quizTimerInterval) clearInterval(gameState.quizTimerInterval);
@@ -587,35 +494,32 @@
       let weaknessBonus = 0;
       let targetDefMultiplier = 1.0;
 
-      // 1. Weakness & Strong Point Multiplier Calculation
       if (gameState.activeTarget === stageData.weakness) {
         weaknessBonus = 4;
-        targetDefMultiplier = 0.5; // Ignores 50% defense
-        logCombat(`🎯 [약점 타격 성공!]: 상대의 ${getTargetName(gameState.activeTarget)} 약점을 정확히 파고들었습니다!`);
+        targetDefMultiplier = 0.5;
+        logCombat(`🎯 [약점 타격 성공!]: 상대의 ${getTargetName(gameState.activeTarget)} 약점을 파고들었습니다!`);
       } else if (gameState.activeTarget === stageData.strong) {
-        targetDefMultiplier = 1.5; // Increases defense
-        logCombat(`🛡️ [강점 가드]: 상대의 강한 부위 ${getTargetName(gameState.activeTarget)}에 가로막혔습니다.`);
+        targetDefMultiplier = 1.5;
+        logCombat(`🛡️ [강점 가드]: 상대의 강한 부위 ${getTargetName(gameState.activeTarget)}에 막혔습니다.`);
       }
 
-      // 2. Round Defense Scaling
       const roundBaseDefPercent = stageData.roundDefenses[Math.min(gameState.currentRound - 1, 2)];
       const effectiveDefPercent = Math.min(90, roundBaseDefPercent * targetDefMultiplier);
 
-      // 3. Solving Speed Multiplier
       let speedMult = 0.0;
       let speedMsg = "";
 
       if (isCorrect) {
         sfx.playCorrect();
         if (solveTimeSec < 1.0) {
-          speedMult = 1.5; // Critical
+          speedMult = 1.5;
           speedMsg = "⚡ 초스피드 정답! (크리티컬 1.5배)";
         } else if (solveTimeSec <= 2.5) {
           speedMult = 1.0;
           speedMsg = "✅ 정답! (일반 명중)";
         } else {
           speedMult = 0.6;
-          speedMsg = "🐢 느린 정답 (데미지 둔화 0.6배)";
+          speedMsg = "🐢 느린 정답 (0.6배)";
         }
       } else {
         sfx.playWrong();
@@ -623,11 +527,9 @@
         speedMsg = "❌ 연산 실패 / 시간 초과 (공격 실패!)";
       }
 
-      // 4. Final Damage Formula Calculation
       const rawDamage = (baseDamage + weaknessBonus) * (1 - (effectiveDefPercent / 100)) * speedMult;
       const finalDamage = Math.max(0, Math.round(rawDamage * 10) / 10);
 
-      // Trigger Animations & SFX
       if (finalDamage > 0) {
         sfx.playPunch();
         playerAnimState = (gameState.activeTarget === 'LEG') ? 'KICK' : 'PUNCH';
@@ -640,14 +542,11 @@
       gameState.enemyHp = Math.max(0, gameState.enemyHp - finalDamage);
       updateHUD();
 
-      logCombat(`[공격 결과]: ${speedMsg} -> 최종 데미지 ${finalDamage} (적 방어력 ${effectiveDefPercent.toFixed(1)}%)`);
-
-      // Check KO or switch to Defense phase
+      logCombat(`[공격 결과]: ${speedMsg} -> 데미지 ${finalDamage}`);
       checkPhaseTransition();
     }
 
     function processPlayerDefense(isCorrect, solveTimeSec) {
-      const stageData = STAGE_DATABASE[gameState.currentStageIdx];
       const enemyBaseDamage = 18;
       let defenseReductionPercent = 0;
       let speedMsg = "";
@@ -655,19 +554,19 @@
       if (isCorrect) {
         sfx.playCorrect();
         if (solveTimeSec < 1.0) {
-          defenseReductionPercent = 100; // Perfect Guard
-          speedMsg = "🛡️ 초스피드 방어! (완전 가드 - 피해 0)";
+          defenseReductionPercent = 100;
+          speedMsg = "🛡️ 초스피드 방어! (피해 0)";
         } else if (solveTimeSec <= 2.5) {
-          defenseReductionPercent = 60; // Standard Guard
+          defenseReductionPercent = 60;
           speedMsg = "🛡️ 방어 성공! (피해 60% 감소)";
         } else {
-          defenseReductionPercent = 30; // Partial Guard
+          defenseReductionPercent = 30;
           speedMsg = "⚠️ 부분 방어 (피해 30% 감소)";
         }
       } else {
         sfx.playWrong();
         defenseReductionPercent = 0;
-        speedMsg = "💥 방어 실패! (방어 가드 뚫림)";
+        speedMsg = "💥 방어 실패!";
       }
 
       const rawDamage = enemyBaseDamage * (1 - (defenseReductionPercent / 100));
@@ -687,7 +586,6 @@
       updateHUD();
 
       logCombat(`[수비 결과]: ${speedMsg} -> 받은 피해 ${finalDamage}`);
-
       checkPhaseTransition();
     }
 
@@ -698,13 +596,11 @@
         playerAnimState = 'IDLE';
         enemyAnimState = 'IDLE';
 
-        // Check Winner
         if (gameState.enemyHp <= 0) {
           handleRoundOrStageClear();
         } else if (gameState.playerHp <= 0) {
-          showModal('GAME_OVER', '패배했습니다...', '구구단 연산 연습을 거쳐 다시 도전하세요!');
+          showModal('GAME_OVER', '패배했습니다...', '연습을 거쳐 다시 도전하세요!');
         } else {
-          // Toggle Phase
           setTurnPhase(gameState.phase === 'ATTACK' ? 'DEFENSE' : 'ATTACK');
         }
       }, 800);
@@ -715,25 +611,22 @@
       
       if (gameState.currentRound < 3) {
         gameState.currentRound++;
-        gameState.enemyHp = 100; // Reset enemy HP for next round
+        gameState.enemyHp = 100;
         updateHUD();
         sfx.playVictory();
-        logCombat(`🔔 [ROUND CLEAR]: 라운드 ${gameState.currentRound - 1} 승리! 적의 방어력이 상승합니다!`);
+        logCombat(`🔔 [ROUND CLEAR]: 라운드 ${gameState.currentRound - 1} 승리! 적 방어력 상승!`);
         setTurnPhase('ATTACK');
       } else {
-        // Stage Complete!
         sfx.playVictory();
         if (gameState.currentStageIdx < STAGE_DATABASE.length - 1) {
           gameState.currentStageIdx++;
           gameState.currentRound = 1;
-          showModal('STAGE_CLEAR', `STAGE ${stageData.stage} 클리어!`, `축하합니다! 다음 정복지: ${STAGE_DATABASE[gameState.currentStageIdx].country} (${STAGE_DATABASE[gameState.currentStageIdx].martial})`);
+          showModal('STAGE_CLEAR', `STAGE ${stageData.stage} 클리어!`, `다음 정복지: ${STAGE_DATABASE[gameState.currentStageIdx].country} (${STAGE_DATABASE[gameState.currentStageIdx].martial})`);
         } else {
-          showModal('VICTORY', '🏆 세계 제패 완수! 🏆', '모든 국가의 무술가들을 제패하고 최고의 구구단 격투왕에 등극했습니다!');
+          showModal('VICTORY', '🏆 세계 제패 완수! 🏆', '최고의 구구단 격투왕 등극!');
         }
       }
     }
-
-    /* --- Helper Functions & Modals --- */
 
     function getTargetName(target) {
       switch (target) {
@@ -745,6 +638,7 @@
     }
 
     function logCombat(msg) {
+      if (!combatLog) return;
       const line = document.createElement('div');
       line.innerText = msg;
       combatLog.appendChild(line);
@@ -789,16 +683,12 @@
       }
     }
 
-    /* --- Canvas Animation Rendering --- */
-
     function renderCanvasLoop() {
       if (!ctx || !canvas) return;
 
-      // Clear & Draw Background Stage Arena
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Arcade Ring Floor
       const floorY = canvas.height * 0.75;
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
@@ -812,13 +702,8 @@
 
       animFrame++;
 
-      // Draw Player Fighter (Left Side)
       drawPlayerFighter(canvas.width * 0.28, floorY);
-
-      // Draw Enemy Fighter (Right Side)
       drawEnemyFighter(canvas.width * 0.72, floorY);
-
-      // Render Dynamic Hit Particles
       renderParticles();
 
       requestAnimationFrame(renderCanvasLoop);
@@ -831,20 +716,18 @@
       const bob = Math.sin(animFrame * 0.1) * 3;
 
       if (playerAnimState === 'IDLE') {
-        // Taekwondo Stance
-        ctx.fillStyle = '#38bdf8'; // Dobok Blue Pants
+        ctx.fillStyle = '#38bdf8';
         ctx.fillRect(-15, -40 + bob, 12, 40);
         ctx.fillRect(3, -40 + bob, 12, 40);
 
-        ctx.fillStyle = '#ffffff'; // White Top
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(-18, -80 + bob, 36, 42);
 
-        ctx.fillStyle = '#e0a96d'; // Head
+        ctx.fillStyle = '#e0a96d';
         ctx.beginPath();
         ctx.arc(0, -92 + bob, 14, 0, Math.PI * 2);
         ctx.fill();
 
-        // Black Belt
         ctx.fillStyle = '#000000';
         ctx.fillRect(-19, -42 + bob, 38, 6);
       } else if (playerAnimState === 'PUNCH') {
@@ -855,7 +738,6 @@
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-18, -80, 36, 42);
 
-        // Extended Punch Arm
         ctx.fillStyle = '#e0a96d';
         ctx.fillRect(10, -70, 45, 12);
 
@@ -866,7 +748,6 @@
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-18, -80, 36, 42);
 
-        // Extended High Kick Leg
         ctx.fillStyle = '#38bdf8';
         ctx.fillRect(-10, -40, 14, 40);
         
@@ -881,7 +762,7 @@
         ctx.arc(0, -92, 14, 0, Math.PI * 2);
         ctx.fill();
       } else if (playerAnimState === 'HIT') {
-        ctx.translate(-15, 0); // Knockback
+        ctx.translate(-15, 0);
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(-18, -75, 36, 40);
 
@@ -897,7 +778,6 @@
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-18, -80, 36, 42);
 
-        // Guarding Arms
         ctx.fillStyle = '#e0a96d';
         ctx.fillRect(5, -85, 12, 35);
 
@@ -920,7 +800,6 @@
         ctx.fillStyle = stageData.color;
         ctx.fillRect(-15, -40 + bob, 12, 40);
         ctx.fillRect(3, -40 + bob, 12, 40);
-
         ctx.fillRect(-18, -80 + bob, 36, 42);
 
         ctx.fillStyle = '#c78d53';
@@ -928,7 +807,6 @@
         ctx.arc(0, -92 + bob, 15, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw Avatar Emoji
         ctx.font = '16px serif';
         ctx.textAlign = 'center';
         ctx.fillText(stageData.avatar, 0, -90 + bob);
@@ -938,7 +816,6 @@
         ctx.fillRect(3, -40, 12, 40);
         ctx.fillRect(-18, -80, 36, 42);
 
-        // Punch Leftward
         ctx.fillStyle = '#c78d53';
         ctx.fillRect(-55, -70, 45, 12);
 
@@ -946,7 +823,7 @@
         ctx.arc(0, -92, 15, 0, Math.PI * 2);
         ctx.fill();
       } else if (enemyAnimState === 'HIT') {
-        ctx.translate(15, 0); // Knockback
+        ctx.translate(15, 0);
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(-18, -75, 36, 40);
 
