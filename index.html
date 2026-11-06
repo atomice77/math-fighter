@@ -43,6 +43,13 @@
     .hp-bar-inner {
       transition: width 0.4s ease-out;
     }
+    @keyframes pulse-crit {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .crit-banner {
+      animation: pulse-crit 0.3s infinite;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-2 sm:p-4 overflow-x-hidden select-none">
@@ -84,6 +91,13 @@
     <!-- Game Canvas Arena -->
     <div class="relative w-full h-[260px] sm:h-[340px] bg-slate-950 overflow-hidden">
       <canvas id="fighterCanvas" class="w-full h-full block"></canvas>
+
+      <!-- Critical Hit Flash Banner -->
+      <div id="crit-overlay" class="hidden absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+        <div class="crit-banner text-yellow-300 font-arcade font-extrabold text-2xl sm:text-4xl drop-shadow-[0_4px_8px_rgba(255,0,0,0.9)] bg-red-900/80 px-6 py-2 rounded-xl border-4 border-yellow-400 transform -rotate-3">
+          ⚡ CRITICAL HIT! ⚡
+        </div>
+      </div>
 
       <!-- Quiz Bubble Popup -->
       <div id="quiz-bubble-overlay" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
@@ -261,10 +275,10 @@
     const sfx = new SoundFX();
 
     const STAGE_DATABASE = [
-      { stage: 1, country: "일본", martial: "가라테", weakness: "BODY", strong: "NONE", roundDefenses: [0, 10, 20], color: "#ef4444", avatar: "🥋" },
-      { stage: 2, country: "태국", martial: "무에타이", weakness: "HEAD", strong: "LEG", roundDefenses: [5, 15, 25], color: "#f59e0b", avatar: "🥊" },
-      { stage: 3, country: "미국", martial: "복싱", weakness: "LEG", strong: "HEAD", roundDefenses: [10, 20, 35], color: "#3b82f6", avatar: "👊" },
-      { stage: 4, country: "캐나다", martial: "불곰", weakness: "HEAD", strong: "BODY", roundDefenses: [15, 30, 45], color: "#8b5cf6", avatar: "🐻" }
+      { stage: 1, country: "일본", martial: "가라테", weakness: "BODY", strong: "NONE", roundDefenses: [0, 10, 20], color: "#ef4444", bgTheme: '#451a03' },
+      { stage: 2, country: "태국", martial: "무에타이", weakness: "HEAD", strong: "LEG", roundDefenses: [5, 15, 25], color: "#f59e0b", bgTheme: '#78350f' },
+      { stage: 3, country: "미국", martial: "복싱", weakness: "LEG", strong: "HEAD", roundDefenses: [10, 20, 35], color: "#1e3a8a", bgTheme: '#1e1b4b' },
+      { stage: 4, country: "캐나다", martial: "불곰", weakness: "HEAD", strong: "BODY", roundDefenses: [15, 30, 45], color: "#581c87", bgTheme: '#311042' }
     ];
 
     let gameState = {
@@ -289,6 +303,7 @@
     let enemyAnimState = 'IDLE';
     let animFrame = 0;
     let hitParticles = [];
+    let screenShakeTime = 0;
 
     let playerHpBar, enemyHpBar, playerHpText, enemyHpText, playerNameHud, enemyNameHud, stageRoundHud, turnBanner, bodyPartSelector, quizBubbleOverlay, quizQuestionEl, quizUserInputEl, quizTimerBar, quizTypeTitle, combatLog, modalScreen;
 
@@ -340,7 +355,6 @@
     }
 
     function startStage() {
-      const stageData = STAGE_DATABASE[gameState.currentStageIdx];
       gameState.enemyHp = 100;
       gameState.phase = 'ATTACK';
       
@@ -473,6 +487,12 @@
       }
     }
 
+    function triggerCritEffect() {
+      const critEl = document.getElementById('crit-overlay');
+      critEl.classList.remove('hidden');
+      setTimeout(() => critEl.classList.add('hidden'), 900);
+    }
+
     function submitQuizAnswer(isTimeout = false) {
       if (gameState.quizTimerInterval) clearInterval(gameState.quizTimerInterval);
       quizBubbleOverlay.classList.add('hidden');
@@ -514,6 +534,7 @@
         if (solveTimeSec < 1.0) {
           speedMult = 1.5;
           speedMsg = "⚡ 초스피드 정답! (크리티컬 1.5배)";
+          triggerCritEffect();
         } else if (solveTimeSec <= 2.5) {
           speedMult = 1.0;
           speedMsg = "✅ 정답! (일반 명중)";
@@ -534,7 +555,8 @@
         sfx.playPunch();
         playerAnimState = (gameState.activeTarget === 'LEG') ? 'KICK' : 'PUNCH';
         enemyAnimState = 'HIT';
-        createHitParticles(canvas.width * 0.7, canvas.height * 0.4);
+        screenShakeTime = 12;
+        createHitParticles(canvas.width * 0.7, canvas.height * 0.45);
       } else {
         enemyAnimState = 'BLOCK';
       }
@@ -579,7 +601,8 @@
         sfx.playPunch();
         playerAnimState = 'HIT';
         enemyAnimState = 'PUNCH';
-        createHitParticles(canvas.width * 0.3, canvas.height * 0.4);
+        screenShakeTime = 15;
+        createHitParticles(canvas.width * 0.3, canvas.height * 0.45);
       }
 
       gameState.playerHp = Math.max(0, gameState.playerHp - finalDamage);
@@ -683,18 +706,49 @@
       }
     }
 
+    /* --- Detailed Retro Canvas Rendering --- */
+
     function renderCanvasLoop() {
       if (!ctx || !canvas) return;
 
-      ctx.fillStyle = '#0f172a';
+      ctx.save();
+      
+      // Screen Shake FX
+      if (screenShakeTime > 0) {
+        screenShakeTime--;
+        const dx = (Math.random() - 0.5) * 10;
+        const dy = (Math.random() - 0.5) * 10;
+        ctx.translate(dx, dy);
+      }
+
+      const stageData = STAGE_DATABASE[gameState.currentStageIdx];
+
+      // 1. Arena Background (Wall)
+      ctx.fillStyle = stageData.bgTheme;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Brick Wall Details
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 2;
+      for (let y = 0; y < canvas.height * 0.75; y += 24) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        const shift = (y / 24) % 2 === 0 ? 0 : 30;
+        for (let x = shift; x < canvas.width; x += 60) {
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 24); ctx.stroke();
+        }
+      }
+
+      // 2. Ring Floor
       const floorY = canvas.height * 0.75;
-      ctx.fillStyle = '#1e293b';
+      const grad = ctx.createLinearGradient(0, floorY, 0, canvas.height);
+      grad.addColorStop(0, '#27272a');
+      grad.addColorStop(1, '#09090b');
+      ctx.fillStyle = grad;
       ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
 
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 4;
+      // Floor Highlight Line
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(0, floorY);
       ctx.lineTo(canvas.width, floorY);
@@ -702,158 +756,201 @@
 
       animFrame++;
 
-      drawPlayerFighter(canvas.width * 0.28, floorY);
-      drawEnemyFighter(canvas.width * 0.72, floorY);
+      // 3. Shadows under fighters
+      drawShadow(canvas.width * 0.28, floorY);
+      drawShadow(canvas.width * 0.72, floorY);
+
+      // 4. Render Detailed Fighters
+      drawDetailedTaekwondoHero(canvas.width * 0.28, floorY);
+      drawDetailedEnemyFighter(canvas.width * 0.72, floorY);
+
+      // 5. Hit Spark Particles
       renderParticles();
 
+      ctx.restore();
       requestAnimationFrame(renderCanvasLoop);
     }
 
-    function drawPlayerFighter(x, y) {
+    function drawShadow(x, y) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(x, y + 2, 35, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // High Quality Detailed Taekwondo Fighter
+    function drawDetailedTaekwondoHero(x, y) {
       ctx.save();
       ctx.translate(x, y);
 
-      const bob = Math.sin(animFrame * 0.1) * 3;
+      const bob = Math.sin(animFrame * 0.12) * 2;
+      const isFemale = gameState.heroType === 'HANA';
 
       if (playerAnimState === 'IDLE') {
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-15, -40 + bob, 12, 40);
-        ctx.fillRect(3, -40 + bob, 12, 40);
+        // Legs (Dobok Pants)
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(-18, -42 + bob, 14, 42); ctx.fillRect(4, -42 + bob, 14, 42);
+        ctx.fillStyle = '#1e293b'; // Feet
+        ctx.fillRect(-20, -6 + bob, 16, 6); ctx.fillRect(4, -6 + bob, 16, 6);
 
+        // Dobok Top
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-18, -80 + bob, 36, 42);
-
-        ctx.fillStyle = '#e0a96d';
+        ctx.fillRect(-22, -82 + bob, 44, 42);
+        // Black V-Neck Collar Line
+        ctx.fillStyle = '#0f172a';
         ctx.beginPath();
-        ctx.arc(0, -92 + bob, 14, 0, Math.PI * 2);
+        ctx.moveTo(-10, -82 + bob); ctx.lineTo(0, -62 + bob); ctx.lineTo(10, -82 + bob);
         ctx.fill();
 
+        // Black Belt
         ctx.fillStyle = '#000000';
-        ctx.fillRect(-19, -42 + bob, 38, 6);
+        ctx.fillRect(-23, -45 + bob, 46, 7);
+        ctx.fillRect(6, -42 + bob, 6, 14); // Belt knot tag
+
+        // Head & Hair
+        ctx.fillStyle = '#fbcfe8'; // Skin
+        ctx.beginPath(); ctx.arc(0, -96 + bob, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isFemale ? '#7c2d12' : '#1e1b4b'; // Hair
+        if (isFemale) {
+          ctx.beginPath(); ctx.arc(0, -100 + bob, 17, 0, Math.PI); ctx.fill();
+          ctx.fillRect(-18, -100 + bob, 36, 12); // Long hair
+        } else {
+          ctx.beginPath(); ctx.arc(0, -100 + bob, 16, 0, Math.PI); ctx.fill();
+        }
+
+        // Headband / Eyes
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(-14, -101 + bob, 28, 4); // Red headband
+        ctx.fillStyle = '#000'; ctx.fillRect(4, -96 + bob, 4, 4); // Eye
+
+        // Red Fighting Gloves (Guards)
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(10, -70 + bob, 12, 12);
+        ctx.fillRect(-18, -66 + bob, 10, 10);
+
       } else if (playerAnimState === 'PUNCH') {
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-15, -40, 12, 40);
-        ctx.fillRect(3, -40, 12, 40);
+        // Extended Punching Stance
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(-22, -40, 16, 40); ctx.fillRect(6, -40, 16, 40);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-24, -80, 48, 42);
+        ctx.fillStyle = '#000'; ctx.fillRect(-25, -44, 50, 7);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-18, -80, 36, 42);
+        // Extended Arm
+        ctx.fillStyle = '#fbcfe8'; ctx.fillRect(12, -72, 38, 12);
+        ctx.fillStyle = '#dc2626'; ctx.fillRect(46, -74, 16, 16); // Red Glove
 
-        ctx.fillStyle = '#e0a96d';
-        ctx.fillRect(10, -70, 45, 12);
+        ctx.fillStyle = '#fbcfe8'; ctx.beginPath(); ctx.arc(2, -96, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(-12, -101, 28, 4);
 
-        ctx.beginPath();
-        ctx.arc(0, -92, 14, 0, Math.PI * 2);
-        ctx.fill();
       } else if (playerAnimState === 'KICK') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-18, -80, 36, 42);
+        // High Kick Stance
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-18, -76, 36, 42);
+        ctx.fillStyle = '#000'; ctx.fillRect(-19, -40, 38, 7);
+        ctx.fillStyle = '#f8fafc'; ctx.fillRect(-14, -38, 14, 38);
 
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-10, -40, 14, 40);
-        
+        // Kicking Leg Angle
         ctx.save();
-        ctx.translate(0, -50);
-        ctx.rotate(-Math.PI / 3);
-        ctx.fillRect(0, 0, 50, 14);
+        ctx.translate(6, -46);
+        ctx.rotate(-Math.PI / 2.8);
+        ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, 54, 16);
+        ctx.fillStyle = '#dc2626'; ctx.fillRect(52, 0, 14, 16); // Foot Guard
         ctx.restore();
 
-        ctx.fillStyle = '#e0a96d';
-        ctx.beginPath();
-        ctx.arc(0, -92, 14, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = '#fbcfe8'; ctx.beginPath(); ctx.arc(-2, -94, 15, 0, Math.PI * 2); ctx.fill();
+
       } else if (playerAnimState === 'HIT') {
-        ctx.translate(-15, 0);
-        ctx.fillStyle = '#ef4444';
-        ctx.fillRect(-18, -75, 36, 40);
+        ctx.translate(-20, 0); // Hurt Knockback
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-18, -75, 36, 40);
+        ctx.fillStyle = '#fbcfe8'; ctx.beginPath(); ctx.arc(-8, -90, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(-20, -96, 28, 4);
 
-        ctx.fillStyle = '#e0a96d';
-        ctx.beginPath();
-        ctx.arc(-5, -88, 14, 0, Math.PI * 2);
-        ctx.fill();
       } else if (playerAnimState === 'BLOCK') {
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-15, -40, 12, 40);
-        ctx.fillRect(3, -40, 12, 40);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-18, -80, 36, 42);
-
-        ctx.fillStyle = '#e0a96d';
-        ctx.fillRect(5, -85, 12, 35);
-
-        ctx.beginPath();
-        ctx.arc(-2, -92, 14, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(-18, -80, 36, 42);
+        ctx.fillStyle = '#000'; ctx.fillRect(-19, -42, 38, 7);
+        ctx.fillStyle = '#dc2626'; ctx.fillRect(8, -88, 14, 28); // Crossed Guard Gloves
+        ctx.fillStyle = '#fbcfe8'; ctx.beginPath(); ctx.arc(-2, -96, 15, 0, Math.PI * 2); ctx.fill();
       }
 
       ctx.restore();
     }
 
-    function drawEnemyFighter(x, y) {
+    // Detailed Unique Stage Enemy Fighter
+    function drawDetailedEnemyFighter(x, y) {
       const stageData = STAGE_DATABASE[gameState.currentStageIdx];
       ctx.save();
       ctx.translate(x, y);
 
-      const bob = Math.sin(animFrame * 0.1 + 1) * 3;
+      const bob = Math.sin(animFrame * 0.12 + 1) * 2;
 
       if (enemyAnimState === 'IDLE') {
-        ctx.fillStyle = stageData.color;
-        ctx.fillRect(-15, -40 + bob, 12, 40);
-        ctx.fillRect(3, -40 + bob, 12, 40);
-        ctx.fillRect(-18, -80 + bob, 36, 42);
+        if (stageData.stage === 4) {
+          // Canada Bear Special Render
+          ctx.fillStyle = '#451a03'; // Bear Fur Body
+          ctx.beginPath(); ctx.ellipse(0, -60 + bob, 32, 45, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(0, -98 + bob, 22, 0, Math.PI * 2); ctx.fill(); // Bear Head
+          // Bear Ears & Snout
+          ctx.beginPath(); ctx.arc(-16, -114 + bob, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(16, -114 + bob, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#78350f'; ctx.beginPath(); ctx.arc(0, -94 + bob, 9, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(0, -96 + bob, 3, 0, Math.PI * 2); ctx.fill(); // Nose
 
-        ctx.fillStyle = '#c78d53';
-        ctx.beginPath();
-        ctx.arc(0, -92 + bob, 15, 0, Math.PI * 2);
-        ctx.fill();
+        } else {
+          // Human Martial Artists (Karate, Muay Thai, Boxing)
+          ctx.fillStyle = stageData.color;
+          ctx.fillRect(-18, -42 + bob, 14, 42); ctx.fillRect(4, -42 + bob, 14, 42);
 
-        ctx.font = '16px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(stageData.avatar, 0, -90 + bob);
+          // Torso / Gi
+          ctx.fillRect(-22, -82 + bob, 44, 42);
+
+          // Skin Head & Features
+          ctx.fillStyle = '#d97706';
+          ctx.beginPath(); ctx.arc(0, -96 + bob, 15, 0, Math.PI * 2); ctx.fill();
+
+          // Stage Headgear / Headband
+          if (stageData.stage === 1) { // Karate Headband
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(-14, -102 + bob, 28, 5);
+          } else if (stageData.stage === 2) { // Muay Thai Mongkhon headband
+            ctx.fillStyle = '#ef4444'; ctx.fillRect(-15, -104 + bob, 30, 6);
+          }
+
+          // Gloves / Wraps
+          ctx.fillStyle = '#111827';
+          ctx.fillRect(-22, -70 + bob, 12, 12);
+          ctx.fillRect(10, -66 + bob, 10, 10);
+        }
+
       } else if (enemyAnimState === 'PUNCH') {
         ctx.fillStyle = stageData.color;
-        ctx.fillRect(-15, -40, 12, 40);
-        ctx.fillRect(3, -40, 12, 40);
-        ctx.fillRect(-18, -80, 36, 42);
+        ctx.fillRect(-22, -80, 44, 42); ctx.fillRect(-18, -40, 14, 40); ctx.fillRect(4, -40, 14, 40);
+        // Punch Leftward
+        ctx.fillStyle = '#d97706'; ctx.fillRect(-48, -72, 38, 12);
+        ctx.fillStyle = '#111827'; ctx.fillRect(-58, -74, 16, 16);
+        ctx.beginPath(); ctx.arc(0, -96, 15, 0, Math.PI * 2); ctx.fill();
 
-        ctx.fillStyle = '#c78d53';
-        ctx.fillRect(-55, -70, 45, 12);
-
-        ctx.beginPath();
-        ctx.arc(0, -92, 15, 0, Math.PI * 2);
-        ctx.fill();
       } else if (enemyAnimState === 'HIT') {
-        ctx.translate(15, 0);
-        ctx.fillStyle = '#ef4444';
-        ctx.fillRect(-18, -75, 36, 40);
+        ctx.translate(20, 0); // Hurt Knockback
+        ctx.fillStyle = '#dc2626'; ctx.fillRect(-18, -75, 36, 40);
+        ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(8, -90, 15, 0, Math.PI * 2); ctx.fill();
 
-        ctx.fillStyle = '#c78d53';
-        ctx.beginPath();
-        ctx.arc(5, -88, 15, 0, Math.PI * 2);
-        ctx.fill();
       } else if (enemyAnimState === 'BLOCK') {
-        ctx.fillStyle = stageData.color;
-        ctx.fillRect(-18, -80, 36, 42);
-
-        ctx.fillStyle = '#c78d53';
-        ctx.fillRect(-18, -85, 12, 35);
-        ctx.beginPath();
-        ctx.arc(2, -92, 15, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = stageData.color; ctx.fillRect(-18, -80, 36, 42);
+        ctx.fillStyle = '#111827'; ctx.fillRect(-20, -88, 14, 28);
+        ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(2, -96, 15, 0, Math.PI * 2); ctx.fill();
       }
 
       ctx.restore();
     }
 
     function createHitParticles(x, y) {
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         hitParticles.push({
           x: x,
           y: y,
-          vx: (Math.random() - 0.5) * 12,
-          vy: (Math.random() - 0.5) * 12,
+          vx: (Math.random() - 0.5) * 16,
+          vy: (Math.random() - 0.5) * 16,
           life: 1.0,
-          color: Math.random() > 0.5 ? '#f59e0b' : '#ef4444'
+          color: Math.random() > 0.4 ? '#f59e0b' : '#ef4444'
         });
       }
     }
@@ -873,7 +970,7 @@
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.life;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, Math.random() * 4 + 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
       }
